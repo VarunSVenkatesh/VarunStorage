@@ -1,0 +1,93 @@
+---
+title: "TCGA assembler- full GBM download."
+output: html_notebook
+author: "Sam Lee"
+lab: "McConnell Lab group"
+date: "01/09/17"
+---
+
+Using TCGA Assembler to download GBM RNASeq data from TCGA. This Is collaborative work with Varun.
+
+### Parameters
+
+```{r}
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(downloader))
+out.dir <- "/home/slee/outputs/2017-09-02-tcga-gbm-count-tables"
+```
+
+## Get patient IDs
+
+```{r}
+url <- "https://raw.githubusercontent.com/VarunSVenkatesh/VarunStorage/master/TCGAGBMcaseslist.csv"
+filename <- "TCGAGBMcaseslist.csv"
+if (!file.exists(filename)) download(url,filename)
+
+TCGAGBMcases <- read_tsv(filename)
+
+caseIDs <- pull(TCGAGBMcases, CaseID)
+head(caseIDs)
+
+```
+
+
+## TCGA download
+
+source the modules
+
+```{r}
+tcgaDir <- "/home/mmclab/downloads/TCGA-Assembler"
+setwd(tcgaDir)
+
+source("Module_A.R")
+source("Module_B.R")
+
+```
+
+
+
+## Non-normalised count data download
+
+Downlaod count data for the caseID patients.
+
+```{r}
+DownloadRNASeqData(cancerType = "GBM",
+                   assayPlatform = "gene_RNAseq",
+                   inputPatientIDs = caseIDs,
+                   saveFolderName = file.path(out.dir, "module_1")
+)
+```
+
+Process the downlaoded file to get a count table with HGNC gene-ids and RSEM generated counts + z-scores for each patient sample
+
+## CHECK CODE BEFORE RUNNING
+
+```{r}
+raw_count.list <-ProcessRNASeqData(
+  inputFilePath = list.files(file.path(out.dir, "module_1"), full.names = T)[1],
+										outputFileName = paste("all-cases",
+																					 sep = "__"),
+										dataType = "geneExp",
+										outputFileFolder = file.path(out.dir, "gene_expr")
+)
+
+```
+
+```{r}
+hgnc.list.raw <- as.character(as.data.frame(raw_count.list[[2]])$GeneSymbol)
+
+gbm.count.tbl <- as.data.frame(raw_count.list[[1]]) %>%
+  mutate(gene_name = hgnc.list.raw) %>%
+  filter(gene_name != "?")
+
+```
+
+Save count table as CSV
+
+## Clinical data
+
+Download the clinical data for patients as well 
+
+```{r}
+
+```
