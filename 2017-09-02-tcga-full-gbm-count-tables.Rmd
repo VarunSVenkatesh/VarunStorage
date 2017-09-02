@@ -6,7 +6,7 @@ lab: "McConnell Lab group"
 date: "01/09/17"
 ---
 
-Using TCGA Assembler to download GBM RNASeq data from TCGA. This Is collaborative work with Varun.
+Using TCGA Assembler to download GBM RNASeq data from TCGA. This is collaborative work with Varun. We will download and create a count table as well as downloading clinical data for all the samples.
 
 ### Parameters
 
@@ -76,18 +76,53 @@ raw_count.list <-ProcessRNASeqData(
 ```{r}
 hgnc.list.raw <- as.character(as.data.frame(raw_count.list[[2]])$GeneSymbol)
 
-gbm.count.tbl <- as.data.frame(raw_count.list[[1]]) %>%
+gbm.raw.tbl <- as.data.frame(raw_count.list[[1]]) %>%
   mutate(gene_name = hgnc.list.raw) %>%
   filter(gene_name != "?")
 
 ```
 
-Save count table as CSV
+Next we want to extract the raw-count columns and the gene name columns from the total table (that incldues the z-scores (tau score??))
+
+```{r}
+gbm.count.tbl <- select(gbm.raw.tbl, - ends_with(".1")) %>%
+  select(gene_name, starts_with("TCGA"))
+
+```
+
+Save this count table.
+
+```{r}
+write_csv(
+  gbm.count.tbl,
+  file.path(out.dir, "tcga-rsem-count-table-gene-level.csv"),
+  col_names = TRUE
+)
+
+```
 
 ## Clinical data
 
 Download the clinical data for patients as well 
 
 ```{r}
+DownloadBiospecimenClinicalData(
+  "GBM",
+  saveFolderName = file.path(out.dir, "clinical-data") 
+)
+
+```
+
+This is the data all downloaded. The clinical info will require further processing when it needs to be used for grouping etc but this is all the data downloaded. Before the count can be used it needs to be normalised for sample size. 
+
+This info is then copied into a place where it can be acessed in a read format by all users of the server. This is `/tcga/gbm/`
+
+```{bash, eval=F}
+if [ ! -d /tcga/gbm ]
+then
+    sudo mkdir -p /tcga/gbm
+fi
+
+sudo cp -r /home/slee/outputs/2017-09-02-tcga-gbm-count-tables/* /tcga/gbm
 
 ```
