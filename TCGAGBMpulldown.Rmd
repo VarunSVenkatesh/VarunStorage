@@ -1,0 +1,66 @@
+---
+title: "TCGA GBM RNA seq file names"
+author: "Varun Venkatesh"
+date: "1 September 2017"
+output: html_document
+---
+
+```{r, include=FALSE}
+```
+
+##Downloading TCGA filenames
+***TCGA file names for GBM code to pull out reavent names to store as variable and pass to downloader programme.
+The casse IDs were pulled from the TCGA using the below metrics, If you dont straify by RNA seq you get about 596 cases this was further refined by using the experimental stragey to RNA seq and not whole exome sequencing. 
+
+| Catergory                   | Values used                      |
+|-----------------------------|----------------------------------|
+| Gender                      | Male and female                  |
+| Strategy i.e WXS vs RNA seq | RNA Seq                          |
+| Disease                     | GBM                              |
+| Project_ID                  | TCGA-GBM                         |
+| Datacatergory               | Clinical and raw sequencing data |
+		
+
+
+
+```{R}
+library(tidyverse)
+library(downloader)
+url <- "https://raw.githubusercontent.com/VarunSVenkatesh/VarunStorage/master/TCGAGBMcaseslist.csv"
+filename <- "TCGAGBMcaseslist.csv"
+if (!file.exists(filename)) download(url,filename)
+
+TCGAGBMcases <- read_tsv(filename)
+head(TCGAGBMcases)
+
+caseIDs <- pull(TCGAGBMcases, CaseID)
+head(caseIDs)
+
+
+```
+
+##Load TCGA assembler packages
+
+Packages to be isntalled trying to write a thing that'll do it at once
+
+```{r}
+TCGA_packages <- c("HGNChelper", "RCurl", "httr", "stringr", "digest", "bitops")
+
+sapply(TCGA_packages, library, character.only = TRUE)
+```
+
+
+##Download relavent files
+
+1.Figure out where you put the TCGA file and using `setwd()`  set the working dictionary to where the TCGA assembler files are
+
+2.Source the modules using the `source()` command i.e > `source("./Module_A.R")`
+`source("./Module_B.R")`
+
+`setwd("/home/varun/TCGA-Assembler/")`
+`getwd()`
+`source("Module_A.R")`
+`source("Module_B.R")`
+
+
+`getwd()`
